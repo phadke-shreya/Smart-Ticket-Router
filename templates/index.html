@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Smart Ticket Router</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Smart Ticket Router</h1>
+        <p class="subtitle">Paste a support ticket below and see it classified instantly.</p>
+
+        <form method="post" action="/route">
+            <textarea name="ticket_text" rows="6" placeholder="e.g. I've been charged twice for my order and no one has responded to my emails!!">{{ ticket_text }}</textarea>
+            <button type="submit">Route Ticket</button>
+        </form>
+
+        {% if error %}
+        <div class="result error">
+            <h2>Error</h2>
+            <p>{{ error }}</p>
+        </div>
+        {% endif %}
+
+        {% if result %}
+        <div class="result">
+            <h2>Result</h2>
+            <table>
+                <tr><th>Category</th><td>{{ result.category }}</td></tr>
+                <tr><th>Priority</th><td class="priority-{{ result.priority|lower }}">{{ result.priority }}</td></tr>
+                <tr><th>Team</th><td>{{ result.team }}</td></tr>
+                <tr><th>Reasoning</th><td>{{ result.reasoning }}</td></tr>
+            </table>
+            <pre>{{ result_json }}</pre>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>
