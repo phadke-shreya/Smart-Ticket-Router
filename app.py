@@ -21,8 +21,9 @@ class ClassifyRequest(BaseModel):
 @app.get("/", response_class=HTMLResponse)
 def show_form(request: Request):
     return templates.TemplateResponse(
+        request,
         "index.html",
-        {"request": request, "result_json": None, "result": None, "error": None, "ticket_text": ""},
+        {"result_json": None, "result": None, "error": None, "ticket_text": ""},
     )
 
 
@@ -38,15 +39,16 @@ def route_ticket(request: Request, ticket_text: str = Form(...)):
         error = str(exc)
 
     return templates.TemplateResponse(
+        request,
         "index.html",
         {
-            "request": request,
             "result": result,
             "result_json": result_json,
             "error": error,
             "ticket_text": ticket_text,
         },
     )
+
 
 
 @app.post("/api/classify")
