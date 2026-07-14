@@ -12,7 +12,8 @@ def main():
             print(f'#{entry["id"]:>2} -> ERROR: {entry["error"]}')
         else:
             r = entry["result"]
-            print(f'#{entry["id"]:>2} -> {r["category"]:<20} {r["priority"]:<7} {r["team"]}')
+            print(f'#{entry["id"]:>2} -> {r["category"]:<20} {r["priority"]:<7} {r["team"]:<18} {r["reasoning"]}')
+
 
     manual_seconds = manual_estimate_seconds(len(tickets))
 

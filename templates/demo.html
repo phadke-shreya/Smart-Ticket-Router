@@ -6,17 +6,17 @@
     <link rel="stylesheet" href="{{ url_for('static', path='/style.css') }}">
 </head>
 <body>
-    <div class="container">
+    <div class="container wide">
         <h1>📊 20-Ticket Demo</h1>
         <p class="subtitle"><a href="/">&larr; Back to ticket router</a></p>
 
         <table>
-            <tr><th>#</th><th>Category</th><th>Priority</th><th>Team</th></tr>
+            <tr><th>#</th><th>Category</th><th>Priority</th><th>Team</th><th>Reasoning</th></tr>
             {% for entry in per_ticket_results %}
             <tr>
                 <td>{{ entry.id }}</td>
                 {% if entry.error %}
-                <td colspan="3" class="error-cell">ERROR: {{ entry.error }}</td>
+                <td colspan="4" class="error-cell">ERROR: {{ entry.error }}</td>
                 {% else %}
                 <td>{{ category_icons[entry.result.category] }} {{ entry.result.category }}</td>
                 <td>
@@ -26,6 +26,7 @@
                     </span>
                 </td>
                 <td>{{ entry.result.team }}</td>
+                <td>{{ entry.result.reasoning }}</td>
                 {% endif %}
             </tr>
             {% endfor %}

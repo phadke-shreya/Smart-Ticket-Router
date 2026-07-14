@@ -144,3 +144,7 @@ pre {
     font-weight: 700;
     color: var(--accent);
 }
+
+.container.wide {
+    max-width: 960px;
+}
