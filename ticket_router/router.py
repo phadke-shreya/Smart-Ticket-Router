@@ -1,11 +1,11 @@
 from pydantic import ValidationError
 
 from ticket_router.llm_client import call_llm, LLMCallError, MalformedResponseError
-from ticket_router.schema import LLMTicketOutputList, build_ticket_result
+from ticket_router.schema import LLMTicketOutput, TicketResult, build_ticket_result
 
 MAX_VALIDATION_RETRIES = 2
 
-_cache: dict[str, list[dict]] = {}
+_cache: dict[str, dict] = {}
 
 
 class TicketRoutingError(Exception):
@@ -17,13 +17,12 @@ def clear_cache() -> None:
     _cache.clear()
 
 
-def classify_ticket(ticket_text: str) -> list[dict]:
+def classify_ticket(ticket_text: str) -> dict:
     """
-    Reusable service function: given raw support ticket text, returns a LIST
-    of one or more classified issues (each with category, priority, team,
-    reasoning). A single-issue ticket returns a list with one item; a ticket
-    mixing genuinely separate issues can return multiple items, each routed
-    to its own team.
+    Reusable service function: given raw support ticket text, returns a dict
+    with category, priority, team, and reasoning. If a ticket describes
+    multiple issues, the LLM reports only the single highest-priority issue
+    (see prompts.py) — this always returns exactly one classification.
 
     Identical ticket text (exact match) returns the cached result instantly.
 
@@ -46,15 +45,15 @@ def classify_ticket(ticket_text: str) -> list[dict]:
             raise TicketRoutingError(str(exc)) from exc
 
         try:
-            parsed = LLMTicketOutputList(**raw_response)
+            llm_output = LLMTicketOutput(**raw_response)
         except ValidationError as exc:
             last_error = exc
-            continue  # got JSON back, but wrong shape/values — ask the LLM again
+            continue
 
-        results = [build_ticket_result(item).model_dump() for item in parsed.tickets]
-        _cache[normalized] = results
-        return results
+        result: TicketResult = build_ticket_result(llm_output)
+        _cache[normalized] = result.model_dump()
+        return _cache[normalized]
 
     raise TicketRoutingError(
-        f"LLM returned invalid ticket data after {MAX_VALIDATION_RETRIES} attempts: {last_error}"
+        f"LLM returned invalid category/priority values after {MAX_VALIDATION_RETRIES} attempts: {last_error}"
     )

@@ -14,8 +14,6 @@ def _clear_router_cache():
     router_module.clear_cache()
 
 
-# ---------- schema.py ----------
-
 def test_valid_llm_output_builds_correct_team():
     output = LLMTicketOutput(category="Shipping", priority="Medium", reasoning="Delivery delay reported.")
     result = build_ticket_result(output)
@@ -34,47 +32,25 @@ def test_invalid_priority_is_rejected():
         LLMTicketOutput(category="Shipping", priority="Urgent", reasoning="not a real priority")
 
 
-# ---------- router.py (call_llm is mocked — no real API calls) ----------
-
 VALID_RESPONSE = {
-    "tickets": [
-        {"category": "Payments", "priority": "High", "reasoning": "Customer was charged but the order failed."},
-    ]
-}
-
-MULTI_ISSUE_RESPONSE = {
-    "tickets": [
-        {"category": "Shipping", "priority": "Medium", "reasoning": "Delivery delay."},
-        {"category": "Account", "priority": "Medium", "reasoning": "Cannot log in, a separate issue."},
-    ]
+    "category": "Payments",
+    "priority": "High",
+    "reasoning": "Customer was charged but the order failed.",
 }
 
 INVALID_CATEGORY_RESPONSE = {
-    "tickets": [
-        {"category": "Not A Real Category", "priority": "High", "reasoning": "bad category"},
-    ]
+    "category": "Not A Real Category",
+    "priority": "High",
+    "reasoning": "bad category",
 }
-
-EMPTY_TICKETS_RESPONSE = {"tickets": []}
 
 
 def test_classify_ticket_success(monkeypatch):
     monkeypatch.setattr(router_module, "call_llm", lambda text: VALID_RESPONSE)
-    results = classify_ticket("I was charged but my order never went through.")
-    assert len(results) == 1
-    assert results[0]["category"] == "Payments"
-    assert results[0]["team"] == "Finance"
-    assert results[0]["priority"] == "High"
-
-
-def test_classify_ticket_splits_multi_issue_ticket(monkeypatch):
-    monkeypatch.setattr(router_module, "call_llm", lambda text: MULTI_ISSUE_RESPONSE)
-    results = classify_ticket("late order and I can't log in")
-    assert len(results) == 2
-    categories = {r["category"] for r in results}
-    assert categories == {"Shipping", "Account"}
-    teams = {r["team"] for r in results}
-    assert teams == {"Logistics", "Customer Support"}
+    result = classify_ticket("I was charged but my order never went through.")
+    assert result["category"] == "Payments"
+    assert result["team"] == "Finance"
+    assert result["priority"] == "High"
 
 
 def test_classify_ticket_retries_then_succeeds(monkeypatch):
@@ -85,19 +61,13 @@ def test_classify_ticket_retries_then_succeeds(monkeypatch):
         return INVALID_CATEGORY_RESPONSE if calls["count"] == 1 else VALID_RESPONSE
 
     monkeypatch.setattr(router_module, "call_llm", fake_call_llm)
-    results = classify_ticket("some ticket")
+    result = classify_ticket("some ticket")
     assert calls["count"] == 2
-    assert results[0]["category"] == "Payments"
+    assert result["category"] == "Payments"
 
 
 def test_classify_ticket_raises_after_max_schema_retries(monkeypatch):
     monkeypatch.setattr(router_module, "call_llm", lambda text: INVALID_CATEGORY_RESPONSE)
-    with pytest.raises(TicketRoutingError):
-        classify_ticket("some ticket")
-
-
-def test_classify_ticket_rejects_empty_tickets_list(monkeypatch):
-    monkeypatch.setattr(router_module, "call_llm", lambda text: EMPTY_TICKETS_RESPONSE)
     with pytest.raises(TicketRoutingError):
         classify_ticket("some ticket")
 
