@@ -7,27 +7,36 @@
 </head>
 <body>
     <div class="container">
-        <h1>Smart Ticket Router</h1>
-        <p class="subtitle">Paste a support ticket below and see it classified instantly.</p>
+        <h1>📮 Smart Ticket Router</h1>
+        <p class="subtitle">Paste a ticket below and let's sort it out. 😊</p>
 
         <form method="post" action="/route">
             <textarea name="ticket_text" rows="6" placeholder="e.g. I've been charged twice for my order and no one has responded to my emails!!">{{ ticket_text }}</textarea>
-            <button type="submit">Route Ticket</button>
+            <button type="submit">Route it! 🚀</button>
         </form>
+
+        <p class="subtitle" style="margin-top: 20px;">
+            <a href="/demo"><button type="button">Run 20-Ticket Demo 📊</button></a>
+        </p>
 
         {% if error %}
         <div class="result error">
-            <h2>Error</h2>
+            <h2>Oops, something went wrong</h2>
             <p>{{ error }}</p>
         </div>
         {% endif %}
 
         {% if result %}
         <div class="result">
-            <h2>Result</h2>
+            <h2>{{ category_icons[result.category] }} Result</h2>
             <table>
-                <tr><th>Category</th><td>{{ result.category }}</td></tr>
-                <tr><th>Priority</th><td class="priority-{{ result.priority|lower }}">{{ result.priority }}</td></tr>
+                <tr><th>Category</th><td>{{ category_icons[result.category] }} {{ result.category }}</td></tr>
+                <tr><th>Priority</th><td>
+                    <span class="priority-pill priority-{{ result.priority|lower }}">
+                        {% if result.priority == "High" %}🔴{% elif result.priority == "Medium" %}🟠{% else %}🟢{% endif %}
+                        {{ result.priority }}
+                    </span>
+                </td></tr>
                 <tr><th>Team</th><td>{{ result.team }}</td></tr>
                 <tr><th>Reasoning</th><td>{{ result.reasoning }}</td></tr>
             </table>
