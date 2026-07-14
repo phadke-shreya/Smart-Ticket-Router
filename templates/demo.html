@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Smart Ticket Router — 20-Ticket Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>📊 20-Ticket Demo</h1>
+        <p class="subtitle"><a href="/">&larr; Back to ticket router</a></p>
+
+        <table>
+            <tr><th>#</th><th>Category</th><th>Priority</th><th>Team</th></tr>
+            {% for entry in per_ticket_results %}
+            <tr>
+                <td>{{ entry.id }}</td>
+                {% if entry.error %}
+                <td colspan="3" class="error-cell">ERROR: {{ entry.error }}</td>
+                {% else %}
+                <td>{{ category_icons[entry.result.category] }} {{ entry.result.category }}</td>
+                <td>
+                    <span class="priority-pill priority-{{ entry.result.priority|lower }}">
+                        {% if entry.result.priority == "High" %}🔴{% elif entry.result.priority == "Medium" %}🟠{% else %}🟢{% endif %}
+                        {{ entry.result.priority }}
+                    </span>
+                </td>
+                <td>{{ entry.result.team }}</td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+        </table>
+
+        <div class="result">
+            <h2>⏱️ Timing Summary</h2>
+            <table>
+                <tr><th>AI routing time (20 tickets)</th><td>{{ ai_elapsed }} seconds (measured)</td></tr>
+                <tr><th>Estimated manual routing time</th><td>{{ manual_minutes }} minutes (assumption: {{ manual_seconds_per_ticket }}s/ticket)</td></tr>
+                <tr><th>Speedup</th><td>~{{ speedup }}x faster 🎉</td></tr>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
