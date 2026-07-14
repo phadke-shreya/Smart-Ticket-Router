@@ -1,11 +1,11 @@
 from pydantic import ValidationError
 
 from ticket_router.llm_client import call_llm, LLMCallError, MalformedResponseError
-from ticket_router.schema import LLMTicketOutput, TicketResult, build_ticket_result
+from ticket_router.schema import LLMTicketOutputList, build_ticket_result
 
 MAX_VALIDATION_RETRIES = 2
 
-_cache: dict[str, dict] = {}
+_cache: dict[str, list[dict]] = {}
 
 
 class TicketRoutingError(Exception):
@@ -17,18 +17,17 @@ def clear_cache() -> None:
     _cache.clear()
 
 
-def classify_ticket(ticket_text: str) -> dict:
+def classify_ticket(ticket_text: str) -> list[dict]:
     """
-    Reusable service function: given raw support ticket text, returns a dict
-    with category, priority, team, and reasoning.
+    Reusable service function: given raw support ticket text, returns a LIST
+    of one or more classified issues (each with category, priority, team,
+    reasoning). A single-issue ticket returns a list with one item; a ticket
+    mixing genuinely separate issues can return multiple items, each routed
+    to its own team.
 
-    Identical ticket text (exact match) returns the cached result instantly
-    instead of calling the LLM again — guarantees the same ticket always
-    gets the same answer, and saves an API call on repeats.
+    Identical ticket text (exact match) returns the cached result instantly.
 
-    Raises TicketRoutingError if classification fails after all retries —
-    callers (the web form, a CLI, tests) are expected to catch this and
-    show an error to the user.
+    Raises TicketRoutingError if classification fails after all retries.
     """
     if not ticket_text or not ticket_text.strip():
         raise TicketRoutingError("Ticket text is empty.")
@@ -47,15 +46,15 @@ def classify_ticket(ticket_text: str) -> dict:
             raise TicketRoutingError(str(exc)) from exc
 
         try:
-            llm_output = LLMTicketOutput(**raw_response)
+            parsed = LLMTicketOutputList(**raw_response)
         except ValidationError as exc:
             last_error = exc
             continue  # got JSON back, but wrong shape/values — ask the LLM again
 
-        result: TicketResult = build_ticket_result(llm_output)
-        _cache[normalized] = result.model_dump()
-        return _cache[normalized]
+        results = [build_ticket_result(item).model_dump() for item in parsed.tickets]
+        _cache[normalized] = results
+        return results
 
     raise TicketRoutingError(
-        f"LLM returned invalid category/priority values after {MAX_VALIDATION_RETRIES} attempts: {last_error}"
+        f"LLM returned invalid ticket data after {MAX_VALIDATION_RETRIES} attempts: {last_error}"
     )
