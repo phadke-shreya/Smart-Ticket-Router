@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from ticket_router.schema import LLMTicketOutput, build_ticket_result, CATEGORY_TEAM_MAP
+from ticket_router.schema import TicketResult
 from ticket_router.llm_client import LLMCallError, MalformedResponseError
 from ticket_router.router import classify_ticket, TicketRoutingError
 import ticket_router.router as router_module
@@ -14,33 +14,48 @@ def _clear_router_cache():
     router_module.clear_cache()
 
 
-def test_valid_llm_output_builds_correct_team():
-    output = LLMTicketOutput(category="Shipping", priority="Medium", reasoning="Delivery delay reported.")
-    result = build_ticket_result(output)
-    assert result.team == CATEGORY_TEAM_MAP["Shipping"]
-    assert result.category == "Shipping"
-    assert result.priority == "Medium"
+def test_valid_ticket_result():
+    result = TicketResult(
+        category="delivery_logistics",
+        priority="High",
+        assigned_team="Logistics & Delivery Ops",
+        reasoning="Order marked delivered but not received.",
+    )
+    assert result.category == "delivery_logistics"
+    assert result.assigned_team == "Logistics & Delivery Ops"
 
 
 def test_invalid_category_is_rejected():
     with pytest.raises(ValidationError):
-        LLMTicketOutput(category="Delivery Issue", priority="Medium", reasoning="not a real category")
+        TicketResult(
+            category="not_a_real_category",
+            priority="Medium",
+            assigned_team="Customer Support Desk",
+            reasoning="bad category",
+        )
 
 
-def test_invalid_priority_is_rejected():
+def test_invalid_team_is_rejected():
     with pytest.raises(ValidationError):
-        LLMTicketOutput(category="Shipping", priority="Urgent", reasoning="not a real priority")
+        TicketResult(
+            category="general_inquiry",
+            priority="Low",
+            assigned_team="Not A Real Team",
+            reasoning="bad team",
+        )
 
 
 VALID_RESPONSE = {
-    "category": "Payments",
+    "category": "payments_billing",
     "priority": "High",
+    "assigned_team": "Payments & Billing",
     "reasoning": "Customer was charged but the order failed.",
 }
 
 INVALID_CATEGORY_RESPONSE = {
-    "category": "Not A Real Category",
+    "category": "not_a_real_category",
     "priority": "High",
+    "assigned_team": "Payments & Billing",
     "reasoning": "bad category",
 }
 
@@ -48,8 +63,8 @@ INVALID_CATEGORY_RESPONSE = {
 def test_classify_ticket_success(monkeypatch):
     monkeypatch.setattr(router_module, "call_llm", lambda text: VALID_RESPONSE)
     result = classify_ticket("I was charged but my order never went through.")
-    assert result["category"] == "Payments"
-    assert result["team"] == "Finance"
+    assert result["category"] == "payments_billing"
+    assert result["assigned_team"] == "Payments & Billing"
     assert result["priority"] == "High"
 
 
@@ -63,7 +78,7 @@ def test_classify_ticket_retries_then_succeeds(monkeypatch):
     monkeypatch.setattr(router_module, "call_llm", fake_call_llm)
     result = classify_ticket("some ticket")
     assert calls["count"] == 2
-    assert result["category"] == "Payments"
+    assert result["category"] == "payments_billing"
 
 
 def test_classify_ticket_raises_after_max_schema_retries(monkeypatch):

@@ -28,16 +28,16 @@
 
         {% if result %}
         <div class="result">
-            <h2>{{ category_icons[result.category] }} Result</h2>
+            <h2>{{ category_icons.get(result.category, "📋") }} Result</h2>
             <table>
-                <tr><th>Category</th><td>{{ category_icons[result.category] }} {{ result.category }}</td></tr>
+                <tr><th>Category</th><td>{{ category_icons.get(result.category, "📋") }} {{ result.category }}</td></tr>
                 <tr><th>Priority</th><td>
                     <span class="priority-pill priority-{{ result.priority|lower }}">
                         {% if result.priority == "High" %}🔴{% elif result.priority == "Medium" %}🟠{% else %}🟢{% endif %}
                         {{ result.priority }}
                     </span>
                 </td></tr>
-                <tr><th>Team</th><td>{{ result.team }}</td></tr>
+                <tr><th>Team</th><td>{{ result.assigned_team }}</td></tr>
                 <tr><th>Reasoning</th><td>{{ result.reasoning }}</td></tr>
             </table>
             <pre>{{ result_json }}</pre>

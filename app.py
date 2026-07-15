@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
-from ticket_router.router import classify_ticket, TicketRoutingError
+from ticket_router.router import classify_ticket, TicketRoutingError, EmptyTicketError
 from ticket_router.demo import load_tickets, run_timed_demo, manual_estimate_seconds, MANUAL_SECONDS_PER_TICKET
 
 app = FastAPI(title="Smart Ticket Router")
@@ -15,14 +15,22 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 CATEGORY_ICONS = {
-    "Order Issue": "📦",
-    "Payments": "💳",
-    "Returns and Refunds": "🔄",
-    "Shipping": "🚚",
-    "Account": "🔐",
-    "Product Inquiry": "🛍️",
-    "General Inquiry": "❓",
+    "order_issue": "📦",
+    "delivery_logistics": "🚚",
+    "returns_refunds": "🔄",
+    "payments_billing": "💳",
+    "product_issue": "💔",
+    "account_access": "🔐",
+    "wallet_offers": "🎁",
+    "seller_related": "🏪",
+    "warranty_installation": "🔧",
+    "technical_platform": "🐛",
+    "fraud_security": "🚨",
+    "feedback_complaints": "📢",
+    "general_inquiry": "❓",
+    "unclassified": "❔",
 }
+
 
 class ClassifyRequest(BaseModel):
     ticket_text: str
@@ -33,20 +41,28 @@ def show_form(request: Request):
     return templates.TemplateResponse(
         request,
         "index.html",
-        {"result": None, "result_json": None, "error": None, "ticket_text": ""},
+        {
+            "result": None,
+            "result_json": None,
+            "error": None,
+            "ticket_text": "",
+            "category_icons": CATEGORY_ICONS,
+        },
     )
 
 
 @app.post("/route", response_class=HTMLResponse)
-def route_ticket(request: Request, ticket_text: str = Form(...)):
+def route_ticket(request: Request, ticket_text: str = Form("")):
     result = None
     result_json = None
     error = None
     try:
         result = classify_ticket(ticket_text)
         result_json = json.dumps(result, indent=2)
+    except EmptyTicketError:
+        error = "Please enter a ticket before submitting."
     except TicketRoutingError as exc:
-        print(f"[classify_ticket error] {exc}")  # full technical detail logged server-side, for developers
+        print(f"[classify_ticket error] {exc}")
         error = "We couldn't process this ticket right now. Please try again in a moment."
 
     return templates.TemplateResponse(
@@ -66,6 +82,8 @@ def route_ticket(request: Request, ticket_text: str = Form(...)):
 def classify_api(payload: ClassifyRequest):
     try:
         return classify_ticket(payload.ticket_text)
+    except EmptyTicketError:
+        return {"error": "Ticket text is empty."}
     except TicketRoutingError as exc:
         return {"error": str(exc)}
 
