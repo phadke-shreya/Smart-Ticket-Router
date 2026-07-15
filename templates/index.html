@@ -11,7 +11,16 @@
         <p class="subtitle">Paste a ticket below and let's sort it out. 😊</p>
 
         <form method="post" action="/route">
-            <textarea name="ticket_text" rows="6" placeholder="e.g. I've been charged twice for my order and no one has responded to my emails!!">{{ ticket_text }}</textarea>
+            <label class="field-label" for="demo-select">Or pick a demo ticket:</label>
+            <select id="demo-select" onchange="document.getElementById('ticket-textarea').value = this.value; this.form.submit();">
+                <option value="">— Select a demo ticket —</option>
+                {% for ticket in sample_tickets %}
+                <option value="{{ ticket.text }}">#{{ ticket.id }}: {{ ticket.text[:70] }}{% if ticket.text|length > 70 %}…{% endif %}</option>
+                {% endfor %}
+            </select>
+
+            <label class="field-label" for="ticket-textarea" style="margin-top: 16px;">Or paste your own:</label>
+            <textarea id="ticket-textarea" name="ticket_text" rows="6" placeholder="e.g. I've been charged twice for my order and no one has responded to my emails!!">{{ ticket_text }}</textarea>
             <button type="submit">Route it! 🚀</button>
         </form>
 
@@ -29,18 +38,33 @@
         {% if result %}
         <div class="result">
             <h2>{{ category_icons.get(result.category, "📋") }} Result</h2>
-            <table>
-                <tr><th>Category</th><td>{{ category_icons.get(result.category, "📋") }} {{ result.category }}</td></tr>
-                <tr><th>Priority</th><td>
-                    <span class="priority-pill priority-{{ result.priority|lower }}">
-                        {% if result.priority == "High" %}🔴{% elif result.priority == "Medium" %}🟠{% else %}🟢{% endif %}
-                        {{ result.priority }}
-                    </span>
-                </td></tr>
-                <tr><th>Team</th><td>{{ result.assigned_team }}</td></tr>
-                <tr><th>Reasoning</th><td>{{ result.reasoning }}</td></tr>
-            </table>
-            <pre>{{ result_json }}</pre>
+            <div class="result-grid">
+                <div class="stat-tile">
+                    <div class="stat-label">Category</div>
+                    <div class="stat-value">{{ category_icons.get(result.category, "📋") }} {{ result.category }}</div>
+                </div>
+                <div class="stat-tile">
+                    <div class="stat-label">Priority</div>
+                    <div class="stat-value">
+                        <span class="priority-pill priority-{{ result.priority|lower }}">
+                            {% if result.priority == "High" %}🔴{% elif result.priority == "Medium" %}🟠{% else %}🟢{% endif %}
+                            {{ result.priority }}
+                        </span>
+                    </div>
+                </div>
+                <div class="stat-tile">
+                    <div class="stat-label">Team</div>
+                    <div class="stat-value">{{ result.assigned_team }}</div>
+                </div>
+            </div>
+            <div class="reasoning-box">
+                <div class="stat-label">Reasoning</div>
+                <p>{{ result.reasoning }}</p>
+            </div>
+            <details class="json-details">
+                <summary>View raw JSON</summary>
+                <pre>{{ result_json }}</pre>
+            </details>
         </div>
         {% endif %}
     </div>

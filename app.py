@@ -47,6 +47,7 @@ def show_form(request: Request):
             "error": None,
             "ticket_text": "",
             "category_icons": CATEGORY_ICONS,
+            "sample_tickets": load_tickets(),
         },
     )
 
@@ -74,6 +75,7 @@ def route_ticket(request: Request, ticket_text: str = Form("")):
             "error": error,
             "ticket_text": ticket_text,
             "category_icons": CATEGORY_ICONS,
+            "sample_tickets": load_tickets(),
         },
     )
 

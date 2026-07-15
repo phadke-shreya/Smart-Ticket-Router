@@ -5,6 +5,11 @@
     --accent-dark: #E8624A;
     --text: #3A2E2A;
     --text-light: #8A7A73;
+    --card-bg: #fff;
+    --tile-bg: #fff;
+    --tile-border: #FFE3D6;
+    --result-bg: #FFFAF6;
+    --result-border: #FFE9DD;
 }
 
 body {
@@ -19,10 +24,14 @@ body {
 .container {
     max-width: 640px;
     margin: 0 auto;
-    background: #fff;
+    background: var(--card-bg);
     padding: 36px;
     border-radius: 20px;
     box-shadow: 0 8px 30px rgba(255, 122, 92, 0.12), 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.container.wide {
+    max-width: 960px;
 }
 
 h1 {
@@ -39,19 +48,38 @@ h1 {
     font-size: 15px;
 }
 
-textarea {
+.field-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
+}
+
+select, textarea {
     width: 100%;
-    padding: 14px;
+    padding: 12px 14px;
     font-size: 15px;
-    border: 2px solid #FFE3D6;
-    border-radius: 14px;
-    resize: vertical;
+    border: 2px solid var(--tile-border);
+    border-radius: 12px;
     font-family: inherit;
-    background: #FFFCFA;
+    background: var(--tile-bg);
+    color: var(--text);
     transition: border-color 0.2s ease;
 }
 
-textarea:focus {
+select {
+    cursor: pointer;
+    margin-bottom: 4px;
+}
+
+textarea {
+    resize: vertical;
+}
+
+select:focus, textarea:focus {
     outline: none;
     border-color: var(--accent);
 }
@@ -84,8 +112,8 @@ button:active {
     margin-top: 28px;
     padding: 22px;
     border-radius: 16px;
-    background: #FFFAF6;
-    border: 1px solid #FFE9DD;
+    background: var(--result-bg);
+    border: 1px solid var(--result-border);
     animation: fadeIn 0.3s ease;
 }
 
@@ -106,8 +134,80 @@ button:active {
     margin-top: 0;
 }
 
+.result-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+@media (max-width: 600px) {
+    .result-grid { grid-template-columns: 1fr; }
+}
+
+.stat-tile {
+    background: var(--tile-bg);
+    border: 1px solid var(--tile-border);
+    border-radius: 12px;
+    padding: 12px 14px;
+}
+
+.stat-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-light);
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.stat-value {
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.reasoning-box {
+    background: var(--tile-bg);
+    border: 1px solid var(--tile-border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 14px;
+}
+
+.reasoning-box p {
+    margin: 4px 0 0 0;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.json-details summary {
+    cursor: pointer;
+    font-weight: 600;
+    padding: 8px 0;
+    color: var(--accent);
+    user-select: none;
+    list-style: none;
+}
+
+.json-details summary::-webkit-details-marker {
+    display: none;
+}
+
+.json-details summary::before {
+    content: "▶ ";
+    font-size: 11px;
+}
+
+.json-details[open] summary::before {
+    content: "▼ ";
+}
+
+.json-details pre {
+    margin-top: 8px;
+}
+
 table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
-th, td { text-align: left; padding: 8px 8px; border-bottom: 1px solid #FFE9DD; font-size: 14px; }
+th, td { text-align: left; padding: 8px 8px; border-bottom: 1px solid var(--result-border); font-size: 14px; }
 th { width: 120px; color: var(--text-light); font-weight: 600; }
 
 .priority-pill {
@@ -145,6 +245,39 @@ pre {
     color: var(--accent);
 }
 
-.container.wide {
-    max-width: 960px;
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --text: #F0E6DE;
+        --text-light: #B5A599;
+        --card-bg: #2A2119;
+        --tile-bg: #241C17;
+        --tile-border: #4A3C30;
+        --result-bg: #241C17;
+        --result-border: #4A3C30;
+    }
+
+    body {
+        background: linear-gradient(135deg, #1A1512 0%, #241C17 100%);
+    }
+
+    .container {
+        box-shadow: 0 8px 30px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.3);
+    }
+
+    .result.error {
+        background: #3A211E;
+        border-color: #5C2E29;
+        color: #FF9B8C;
+    }
+
+    .error-cell {
+        background: #3A211E;
+        color: #FF9B8C;
+    }
+
+    pre {
+        background: #14100D;
+        color: #FFE3D6;
+    }
 }

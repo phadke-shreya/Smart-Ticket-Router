@@ -13,10 +13,10 @@ def demo_retry_then_succeed():
     def flaky_call_llm(ticket_text):
         calls["count"] += 1
         if calls["count"] == 1:
-            print("  Attempt 1: LLM returned an invalid category ('Delivery Issue') -> validation fails, retrying...")
-            return {"category": "Delivery Issue", "priority": "Medium", "reasoning": "bad"}
+            print("  Attempt 1: LLM returned an invalid category ('not_a_category') -> validation fails, retrying...")
+            return {"category": "not_a_category", "priority": "Medium", "assigned_team": "Customer Support Desk", "reasoning": "bad"}
         print("  Attempt 2: LLM returned a valid response.")
-        return {"category": "Shipping", "priority": "Medium", "reasoning": "Delivery delay reported."}
+        return {"category": "delivery_logistics", "priority": "Medium", "assigned_team": "Logistics & Delivery Ops", "reasoning": "Delivery delay reported."}
 
     with patch.object(router_module, "call_llm", flaky_call_llm):
         result = classify_ticket("My package is late.")
@@ -28,13 +28,14 @@ def demo_max_retries_exceeded():
     clear_cache()
 
     def always_invalid(ticket_text):
-        return {"category": "Not A Real Category", "priority": "High", "reasoning": "bad"}
+        return {"category": "not_a_category", "priority": "High", "assigned_team": "Customer Support Desk", "reasoning": "bad"}
 
     with patch.object(router_module, "call_llm", always_invalid):
         try:
             classify_ticket("Some ticket that keeps failing validation.")
         except TicketRoutingError as exc:
             print(f"  Gave up after max retries, returned a clean error instead of crashing: {exc}")
+
 
 
 def demo_api_failure():
